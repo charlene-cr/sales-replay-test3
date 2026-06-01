@@ -6,7 +6,7 @@ import process from "node:process";
 
 const args = parseArgs(process.argv.slice(2));
 const owner = args.owner ?? "charlene-cr";
-const repo = args.repo ?? "sales-replay-test2";
+const repo = args.repo ?? "sales-replay-test3";
 const visibility = args.visibility ?? "private";
 const dryRun = Boolean(args["dry-run"]);
 const repository = `${owner}/${repo}`;
@@ -36,6 +36,11 @@ const prSpecs = [
   spec("wide", "add-reconciliation-workspace", "Add reconciliation workspace", addReconciliationWorkspace),
   spec("wide", "consolidate-ledger-fixture-suite", "Consolidate ledger fixture suite", consolidateLedgerFixtureSuite),
 ];
+const requestedPrCount = args.count === undefined ? prSpecs.length : Number(args.count);
+if (!Number.isInteger(requestedPrCount) || requestedPrCount < 1 || requestedPrCount > prSpecs.length) {
+  throw new Error(`--count must be an integer between 1 and ${prSpecs.length}`);
+}
+const selectedPrSpecs = prSpecs.slice(0, requestedPrCount);
 
 main();
 
@@ -53,8 +58,8 @@ function main() {
   ensureRemote();
   run("git", ["push", "-u", "origin", "main"]);
 
-  for (let index = 0; index < prSpecs.length; index += 1) {
-    const pr = prSpecs[index];
+  for (let index = 0; index < selectedPrSpecs.length; index += 1) {
+    const pr = selectedPrSpecs[index];
     const number = String(index + 1).padStart(2, "0");
     const branch = `pr/${number}-${pr.slug}`;
 
@@ -257,7 +262,7 @@ function addPackageHealthCheck() {
   writeLines("src/health.mjs", [
     "export function packageHealth() {",
     "  return {",
-    "    name: \"sales-replay-test2\",",
+    "    name: \"sales-replay-test3\",",
     "    status: \"ok\",",
     "    checkedAt: new Date().toISOString(),",
     "  };",
